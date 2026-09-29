@@ -16,6 +16,38 @@ const updateHeaderShadow = () => header.classList.toggle("scrolled", window.scro
 window.addEventListener("scroll", updateHeaderShadow, { passive: true });
 updateHeaderShadow();
 
+const revealSelector = [
+  ".stats-grid > div", ".eyebrow", ".section-title", ".body-copy", ".focus-item", ".detail-row",
+  ".spec-table", ".label-grid p", ".feature-row", ".tier", ".contact-detail", ".contact-legal",
+  ".cert-strip", ".footer-main > div", ".legal-crumbs", ".legal-meta", ".legal-toc", ".legal-section", ".legal-contact",
+].join(",");
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (!prefersReducedMotion && "IntersectionObserver" in window) {
+  const targets = [];
+  document.querySelectorAll(revealSelector).forEach((el) => {
+    if (el.closest(".hero") || el.parentElement.closest(".reveal")) return;
+    el.classList.add("reveal");
+    targets.push(el);
+  });
+
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries
+      .filter((entry) => entry.isIntersecting)
+      .forEach((entry, i) => {
+        const el = entry.target;
+        el.style.transitionDelay = `${Math.min(i, 6) * 90}ms`;
+        el.classList.add("is-visible");
+        el.addEventListener("transitionend", () => { el.style.transitionDelay = ""; }, { once: true });
+        revealObserver.unobserve(el);
+      });
+  }, { rootMargin: "0px 0px -8% 0px" });
+
+  targets.forEach((el) => revealObserver.observe(el));
+} else {
+  document.documentElement.classList.remove("js-reveal");
+}
+
 const tocLinks = document.querySelectorAll(".legal-toc a[href^='#']");
 if (tocLinks.length) {
   const linkFor = new Map([...tocLinks].map((link) => [link.getAttribute("href").slice(1), link]));
